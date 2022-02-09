@@ -1,0 +1,12 @@
+{
+  "name": "node_server_ex",
+  "version": "1.0.0",
+  "description": "working with reactor_ex",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "tkxksdl2",
+  "license": "ISC"
+}
