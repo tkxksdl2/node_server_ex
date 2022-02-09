@@ -11,9 +11,6 @@ const corsOptions = {
     credentials: true
 };
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true })); // 배열을 받아오기 위함
-
 app.use(
     session({
         resave: false,
@@ -28,6 +25,11 @@ app.use(
 
 app.use(cors(corsOptions));
 
+app.use(express.json())
+app.use(express.urlencoded({ extended: true })); // 배열을 받아오기 위함
+
+app.use("/member", require("./routes/memberRouter"));
+app.use("/board", require("./routes/boardRouter"));
 
 app.listen(8080, () => {
     console.log("listening");
