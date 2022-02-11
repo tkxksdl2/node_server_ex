@@ -13,7 +13,7 @@ router.post("/join", async (req, res) => {
 
         if (user) {
             res.json({
-                message: "이메일이 중복되었습니다. 새로운 이메일을 입려갷주세요.",
+                message: "이메일이 중복되었습니다. 새로운 이메일을 입력해주세요.",
                 dupYn: "1"
             });
         } else {
@@ -55,85 +55,92 @@ router.post("/join", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-    try{
-        await User.findOne({ email: req.body.email}, async (err, user) => {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log(user);
-                if (user) {
-                    console.log(req.body.password);
-                    console.log(user.salt);
-                    crypto.pbkdf2(
-                        req.body.password,
-                        user.salt,
-                        10000,
-                        64,
-                        "sha512",
-                        async (err, key) => {
-                            if (err) {
-                                console.log(err);
+    try {
+        let user = await User.findOne({ email: req.body.email });
+        console.log(user);
+        if (user) {
+            //아이디가 존재할 경우 이메일과 패스워드가 일치하는 회원이 있는지 확인
+            console.log('user 확인')
+            console.log(req.body.password);
+            console.log(user.salt);
+            crypto.pbkdf2(
+                req.body.password,
+                user.salt,
+                100000,
+                64,
+                "sha512",
+                async (err, key) => {
+                    if (err) {
+                        console.log(err);
+                    } else {
+                        const obj = {
+                            email: req.body.email,
+                            password: key.toString("base64")
+                        };
+    
+                        const user2 = await User.findOne(obj);
+                        console.log(user2);
+                        if (user2) {
+                            // 있으면 로그인 처리
+                            res.json({
+                                message: "로그인 되었습니다!",
+                                _id: user2._id,
+                                email: user2.email
+                            });
+                            
+                            await User.updateOne(
+                            {
+                                email: req.body.email
+                            },
+                            { $set: { loginCnt: 0 } }
+                            );
+                            req.session.email = user.email;
+                            
+                            console.log('response sended');
+                        } else {
+                            //없으면 로그인 실패횟수 추가
+                            if (user.loginCnt > 4) {
+                                res.json({
+                                    message:
+                                    "아이디나 패스워드가 5회 이상 일치하지 않아 잠겼습니다.\n고객센터에 문의 바랍니다."
+                                });
                             } else {
-                                const obj = {
-                                    email: req.body.email,
-                                    password: key.toString("base64")
-                                };
-
-                                const user2 = await User.findOne(obj);
-                                console.log(user2);
-                                if (user2) {
+                                await User.updateOne(
+                                    {
+                                    email: req.body.email
+                                    },
+                                    { $set: { loginCnt: user.loginCnt + 1 } }
+                                );
+                                if (user.loginCnt >= 5) {
                                     await User.updateOne(
-                                        {
+                                    {
                                         email: req.body.email
-                                        },
-                                        { $set: {lginCnt:0 } }
+                                    },
+                                    { $set: { lockYn: true } }
                                     );
-                                    req.session.email = user.email;
-                                    req.json({
-                                        message: "로그인 되었습니다!",
-                                        _id: user2._id, // 이값은 쿠키로 들어감
-                                        email: user2.email
+                                    res.json({
+                                    message:
+                                        "아이디나 패스워드가 5회 이상 일치하지 않아 잠겼습니다.\n고객센터에 문의 바랍니다."
                                     });
                                 } else {
-                                    if (user.loginCnt > 4) {
-                                        res.json({
-                                            message: "아이디나 패스워드가 5회 이상 일치하지 않아 잠겼습니다.\n고객센터에 문의 바랍니다."
-                                        });
-                                    } else {
-                                        await User.updateOne(
-                                            {
-                                            email: req.body.email
-                                            },
-                                            { $set: { loginCnt: user.loginCnt +1 }}
-                                        );
-                                        if (user.loginCnt >=5) {
-                                            await User.updateOne(
-                                                { email: req.body.email},
-                                                { $set: { lockYn:true } }
-                                            );
-                                            res.json({
-                                                message: "아이디나 패스워드가 5회이상 일치하지 않아 잠겼습니다.\n고객센터에 문의 바랍니다."
-                                            });
-                                        } else{
-                                            res.json({
-                                                message: "아이디나 패스워드가 일치하지 않습니다."
-                                            });
-                                        }
-                                    }
+                                    res.json({
+                                    message: "아이디나 패스워드가 일치하지 않습니다."
+                                    });
                                 }
                             }
                         }
-                    );
-                } else {
-                    res.json({ message: "아이디가 일치하지 않습니다."});
+                    }
                 }
-            }
-        });
-
-    }catch (err) {
-        console.log(err);
-        res.json({ messge: "로그인 실패"});
+            );
+        } else {
+        res.json({ message: "아이디나 패스워드가 일치하지 않습니다." });
+        }
+    } catch (err) {
+    console.log(err);
+    res.json({ message: "로그인 실패" });
     }
 });
+
+
 
 module.exports = router;
