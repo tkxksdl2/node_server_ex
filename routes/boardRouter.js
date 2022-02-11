@@ -57,3 +57,5 @@ router.post("/getBoardList", async (req, res) => {
         res.json({ message: false });
     }
 });
+
+module.exports = router;
