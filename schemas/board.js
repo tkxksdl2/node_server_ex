@@ -11,6 +11,11 @@ const boardSchema = new Schema({
         required: true,
         ref: "User"
     },
+    name: {
+        type: String,
+        required: true,
+        ref:"User"
+    },
     title: {
         type: String,
         required: true
