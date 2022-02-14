@@ -141,6 +141,12 @@ router.post("/login", async (req, res) => {
     }
 });
 
+router.get("/logout", (req, res) => {
+    console.log("/logout" + req.sessionID);
+    req.session.destroy(() => {
+        res.json({message:true});
+    });
+});
 
 
 module.exports = router;
