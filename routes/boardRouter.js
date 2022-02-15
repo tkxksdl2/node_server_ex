@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Board = require("../schemas/board");
+const User = require("../schemas/user");
+
 
 router.post("/delete", async (req, res) =>{
     try {
@@ -32,15 +34,17 @@ router.post("/update", async (req, res) => {
 
 router.post("/write", async (req, res) => {
     try{
+        let user = await User.findOne({_id : req.body._id})
         const obj = {
             writer: req.body._id,
             title: req.body.title,
+            name: user.name,
             content: req.body.content
         };
-        console.log(obs);
+        console.log(obj);
         const board = new Board(obj);
         await board.save();
-        req.json({ message: "게시글이 업로드 되었습니다."});
+        res.json({ message: "게시글이 업로드 되었습니다."});
     } catch (err) {
         console.log(err);
         res.json({ message: false });
