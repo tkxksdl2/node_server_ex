@@ -62,4 +62,15 @@ router.post("/getBoardList", async (req, res) => {
     }
 });
 
+router.post("/detail", async (req, res) => {
+    try{
+        const _id = req.body._id;
+        const board = await Board.find({_id});
+        res.json({board});
+    } catch(err){
+        console.log(err);
+        res.json({ message: false });
+    }
+});
+
 module.exports = router;
