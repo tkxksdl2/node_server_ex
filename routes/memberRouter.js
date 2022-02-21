@@ -148,5 +148,15 @@ router.get("/logout", (req, res) => {
     });
 });
 
+router.post("/getEmail", async (req, res) => {
+    try{
+        const _id = req.body._id;
+        let user = await User.findOne({_id:_id});
+        res.json({email:user.email});
+    }catch(err){
+        console.log(err);
+    }
+});
+
 
 module.exports = router;
