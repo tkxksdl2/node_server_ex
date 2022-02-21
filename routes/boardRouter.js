@@ -21,7 +21,6 @@ router.post("/update", async (req, res) => {
         await Board.updateOne(
             {_id: req.body._id},
             {$set:{
-                writer: req.body.writer,
                 title: req.body.title,
                 content: req.body.content
             }});
