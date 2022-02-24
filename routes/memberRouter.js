@@ -7,9 +7,7 @@ const crypto = require("crypto");
 router.post("/join", async (req, res) => {
     try{
         let obj = {email:req.body.email};
-
         let user = await User.findOne(obj);
-        console.log(user);
 
         if (user) {
             res.json({
@@ -31,7 +29,6 @@ router.post("/join", async (req, res) => {
                             if (err) {
                                 console.log(err);
                             } else {
-                                console.log(key.toString("base64"));
                                 buf.toString("base64");
                                 obj = {
                                     email: req.body.email,
@@ -57,12 +54,9 @@ router.post("/join", async (req, res) => {
 router.post("/login", async (req, res) => {
     try {
         let user = await User.findOne({ email: req.body.email });
-        console.log(user);
         if (user) {
             //아이디가 존재할 경우 이메일과 패스워드가 일치하는 회원이 있는지 확인
             console.log('user 확인')
-            console.log(req.body.password);
-            console.log(user.salt);
             crypto.pbkdf2(
                 req.body.password,
                 user.salt,
@@ -95,8 +89,6 @@ router.post("/login", async (req, res) => {
                             { $set: { loginCnt: 0 } }
                             );
                             req.session.email = user.email;
-                            
-                            console.log('response sended');
                         } else {
                             //없으면 로그인 실패횟수 추가
                             if (user.loginCnt > 4) {
@@ -158,5 +150,83 @@ router.post("/getEmail", async (req, res) => {
     }
 });
 
+router.post("/update", async (req, res) => {
+    try{
+        let user = await User.findOne({ email: req.body.email });
+        crypto.pbkdf2(
+            req.body.password,
+            user.salt,
+            100000,
+            64,
+            "sha512",
+            async (err, key) => {
+                if (err){
+                    console.log(err);
+                } else {
+                    const obj = {
+                        email: req.body.email,
+                        password: key.toString("base64")
+                    };
+                    let user2 = await User.findOne(obj);
+                    if (user2) {
+                        crypto.randomBytes(64, (err, buf) => {
+                            if (err){
+                                console.log(err);
+                            } else {
+                                crypto.pbkdf2(
+                                    req.body.newpass,
+                                    buf.toString("base64"),
+                                    100000,
+                                    64,
+                                    "sha512",
+                                    async (err, key) => {
+                                        if (err) {
+                                            console.log(err);
+                                        } else {
+                                            await User.updateOne(
+                                                obj,
+                                                {$set:
+                                                    {
+                                                    name:req.body.name,
+                                                    password:key.toString("base64"),
+                                                    salt:buf.toString("base64")
+                                                    }
+                                                }
+                                            );
+                                            res.json({
+                                                message: "수정이 완료되었습니다.\n다시 로그인해주세요.",
+                                                check: true
+                                            });
+                                        }
+                                    }
+                                );
+                            }
+                        });
+                    } else{
+                        res.json({
+                            check: false,
+                            message: "비밀번호가 일치하지 않습니다."
+                        });
+                    }
+                }
+            }
+        );
+    } catch (err){
+        console.log(err);    
+    }
+});
+
+router.post("/delete", async (req, res) => {
+    try{
+        await User.remove(
+            {_id: req.body._id}
+        );
+        res.json({
+            message:"회원 탈퇴되었습니다."
+        })
+    } catch (err){
+        console.log(err);
+    }
+});
 
 module.exports = router;
