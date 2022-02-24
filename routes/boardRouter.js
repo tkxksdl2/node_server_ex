@@ -12,7 +12,7 @@ router.post("/delete", async (req, res) =>{
         res.json({ message: true});
     } catch (err) {
         console.log(err);
-        res.json({ message: flase});
+        res.json({ message: false});
     }
 });
 
